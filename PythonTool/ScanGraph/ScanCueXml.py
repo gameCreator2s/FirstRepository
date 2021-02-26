@@ -24,6 +24,9 @@ class ScanCueXml(object):
       #未使用的节点表里所需要统计的字段
       self.unUsedCueAttrList = ["CueType","Name","Desc"]
 
+      #需要检索的graph目录名称
+      self.targetGraphDir = []
+
    def __del__(self):
       # print("destroy")
       del self.allCueNodeTypeDir
@@ -170,6 +173,11 @@ class ScanCueXml(object):
       if not self.closePreOpenExcel():
          return
 
+      #用户输入需要查找的graph名称
+      graphDirName = raw_input("please input target graph name (eg: common,hero) :")
+      self.targetGraphDir = str.split(graphDirName,',')
+
+
       self.initAllCueData()
       # self.cuePath = "D:/G109/Project/engine_trunk/tools/CharacterEditor-Win64/res/cue.xml"
       excelWorkBook = Workbook()
@@ -202,27 +210,29 @@ class ScanCueXml(object):
       dirData = os.walk(graphRootPath)#,topdown = True,onerror = self.onError,followlinks = False
       for path,dir_name_list,file_name_list in dirData:
          for dir_name in dir_name_list:
-            dirPath = os.path.join(path, dir_name)
-            # print("graph目录:{}，路径:{}".format(dir_name,dirPath))
-            # self.fillSheetCell(dirPath)
-            # self.fillSheetCell(dir_name)
-            subDirData = os.walk(dirPath)
-            for subpath,subdir_name_list,subfile_name_list in subDirData:
-               for subfile_name in subfile_name_list: 
-                  if os.path.splitext(subfile_name)[-1] == ".graph":
-                     subFilePath = os.path.join(subpath, subfile_name)
-                     # print("{}目录下的graph文件:{}，路径:{}".format(dir_name,subfile_name,subFilePath))
+            if dir_name in self.targetGraphDir:
+               print("scane grph sub diectory:{}".format(dir_name))
+               dirPath = os.path.join(path, dir_name)
+               # print("graph目录:{}，路径:{}".format(dir_name,dirPath))
+               # self.fillSheetCell(dirPath)
+               # self.fillSheetCell(dir_name)
+               subDirData = os.walk(dirPath)
+               for subpath,subdir_name_list,subfile_name_list in subDirData:
+                  for subfile_name in subfile_name_list: 
+                     if os.path.splitext(subfile_name)[-1] == ".graph":
+                        subFilePath = os.path.join(subpath, subfile_name)
+                        # print("{}目录下的graph文件:{}，路径:{}".format(dir_name,subfile_name,subFilePath))
 
-                     #需要跟cueType关联的graph数据
-                     graphDataList = [subfile_name]#subFilePath
+                        #需要跟cueType关联的graph数据
+                        graphDataList = [subfile_name]#subFilePath
 
-                     # 使用minidom解析器打开 XML 文档
-                     DOMTree = xml.dom.minidom.parse(subFilePath)
+                        # 使用minidom解析器打开 XML 文档
+                        DOMTree = xml.dom.minidom.parse(subFilePath)
 
-                     collection = DOMTree.documentElement
-                     for element in collection.getElementsByTagName("Cue"):
-                        self.getSubElementData(element)
-                        self.mapGraphToCue(element,graphDataList)
+                        collection = DOMTree.documentElement
+                        for element in collection.getElementsByTagName("Cue"):
+                           self.getSubElementData(element)
+                           self.mapGraphToCue(element,graphDataList)
       
       # print(os.path.join(os.getcwd(), "cleanUpCueNode.xlsx"))
       keyList = []
